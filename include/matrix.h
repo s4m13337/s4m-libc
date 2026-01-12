@@ -1,11 +1,40 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<time.h>
-#include<math.h>
-#include<assert.h>
+#ifndef MATRIX_H
+#define MATRIX_H
+
+#include<stddef.h>    // size_t
 
 #define MAT_AT(m, i, j) (m)->data[(i) * (m)->cols + (j)]
 #define MAT_PRINT(m) mat_print(m, #m)
+
+/* Matrix structure */
+typedef struct Matrix Matrix;
+
+/* Allocation & freeing function */
+Matrix* mat_alloc(size_t rows, size_t cols);
+void mat_free(Matrix* m);
+
+/* Print matrix */
+void mat_print(Matrix* m, const char* c);
+
+/* Generating basic matrices */
+void mat_ones(Matrix* m);    // Matrix with all ones
+void mat_eye(Matrix* m);     // Identity matrix
+void mat_randf(Matrix* m);   // Matrix with random float elements
+
+/* Operations */
+void mat_transpose(Matrix* dst, const Matrix* m);            // Transpose
+void mat_sum(Matrix* dst, const Matrix* a, const Matrix* b); // Matrix sum
+void mat_dot(Matrix* dst, const Matrix* a, const Matrix* b); // Dot product
+
+/*=================================IMPLEMENTATION=================================*/
+#ifdef MATRIX_IMPLEMENTATION
+
+/* Implementation headers */
+#include<stdio.h>    // printf
+#include<stdlib.h>   // malloc, calloc, free
+#include<assert.h>   // assert
+#include<time.h>     
+#include<math.h>
 
 typedef struct Matrix {
   size_t rows, cols;
@@ -38,7 +67,6 @@ void mat_free(Matrix* mat){
   free(mat);
 }
 
-/* Creating basic matrices */
 void mat_ones(Matrix* m) {
   for(int i=0; i < m->rows; i++)
     for(int j=0; j < m->cols; j++)
@@ -65,8 +93,7 @@ void mat_randf(Matrix* m) {
       MAT_AT(m, i, j) = randf();
 }
 
-// Unary operations
-void mat_transpose(Matrix* dst, Matrix *m) {
+void mat_transpose(Matrix* dst, const Matrix *m) {
   assert(dst->rows == m->cols);
   assert(dst->cols == m->rows);
   
@@ -75,8 +102,7 @@ void mat_transpose(Matrix* dst, Matrix *m) {
       MAT_AT(dst, j, i) = MAT_AT(m, i, j);
 }
 
-// Binary operations
-void mat_sum(Matrix* dst, Matrix* a, Matrix* b) {
+void mat_sum(Matrix* dst, const Matrix* a, const Matrix* b) {
   // Check dimensions of matrices are same
   assert(a->rows == b->rows && b->rows == dst->rows);
   assert(a->cols == b->cols && b->cols == dst->cols);
@@ -86,14 +112,17 @@ void mat_sum(Matrix* dst, Matrix* a, Matrix* b) {
       MAT_AT(dst, i, j) = MAT_AT(a, i, j) + MAT_AT(b, i, j);
 }
 
-void mat_dot(Matrix* dst, Matrix* a, Matrix* b){
+void mat_dot(Matrix* dst, const Matrix* a, const Matrix* b){
   assert(a->cols == b->rows);
   assert(dst->rows == a->rows);
   assert(dst->cols == b->cols);
 
   for(size_t i = 0; i < a->rows; i++){
-    for(size_t j = 0; j < b-> cols; j++)
-      
+    for(size_t j = 0; j < b-> cols; j++){
+      for(size_t k = 0; k < a->cols; k++){
+	MAT_AT(dst, i, j) += MAT_AT(a, i, k) * MAT_AT(b, k , j);
+      }
+    }
   }
 }
 
@@ -108,56 +137,5 @@ void mat_print(Matrix* mat, const char* c){
   printf("]\n");
 }
 
-int main(){
-  Matrix* m1 = mat_alloc(3, 3);
-
-  mat_ones(m1);
-  MAT_PRINT(m1);
-
-  Matrix* m2 = mat_alloc(3, 3);
-  MAT_PRINT(m2);
-
-  Matrix* m3 = mat_alloc(5, 5);
-  mat_eye(m3);
-  MAT_PRINT(m3);
-
-  srand(time(NULL));
-  Matrix* mat_r = mat_alloc(5, 2);
-  mat_randf(mat_r);
-  MAT_PRINT(mat_r);
-
-  printf("Matrix transpose\n");
-  Matrix* A = mat_alloc(4, 3);
-  mat_randf(A);
-  MAT_PRINT(A);
-  Matrix* AT = mat_alloc(3, 4); // Rows & colums have to be interchanged in transposed matrix
-  mat_transpose(AT, A);
-  MAT_PRINT(AT);
-
-  mat_free(A);
-  mat_free(AT);
-  /*
-  for(int i=0; i<9; i++)
-    (m1->data)[i] = i*i;
-
-  for(int i=0; i<9; i++)
-    (m2->data)[i] = i*i*i;
-
-  MAT_PRINT(m1);
-  MAT_PRINT(m2);
-
-  mat_sum(m3, m1, m2);
-  MAT_PRINT(m3);
-  mat_free(m3);
-  */
-  
-  mat_free(m1);
-  mat_free(m2);
-  mat_free(m3);
-  mat_free(mat_r);
-  
-  return 0;
-}
-
-
-
+#endif // MATRIX_IMPLEMENTATION
+#endif // MATRIX_H
